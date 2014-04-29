@@ -3,105 +3,22 @@ assert = require 'assert'
 { Options }    = require '../src/options'
 { Connector }  = require '../src/connector'
 { PROTOCOL_7 } = require '../src/protocol'
+{ MockTimer }    = require './mocks/mock_timer'
+{ MockHandlers }    = require './mocks/mock_handlers'
+{ MockWebSocket }    = require './mocks/mock_web_socket'
 
 HELLO = { command: 'hello', protocols: [PROTOCOL_7], ver: '2.0.8' }
-
-class MockHandlers
-  constructor: ->
-    @_log = []
-
-  obtainLog: ->
-    result = @_log.join("\n")
-    @_log = []
-    result
-
-  log: (message) ->
-    @_log.push message
-
-  connecting: ->
-    @log "connecting"
-  socketConnected: -> {}
-  connected: (protocol) ->
-    @log "connected(#{protocol})"
-  disconnected: (reason) ->
-    @log "disconnected(#{reason})"
-  message: (message) ->
-    @log "message(#{message.command})"
-
-class MockTimer
-  constructor: (@func) ->
-    MockTimer.timers.push this
-    @time = null
-
-  start: (timeout) ->
-    @time = MockTimer.now + timeout
-
-  stop: ->
-    @time = null
-
-  fire: ->
-    @time = null
-    @func()
-
-MockTimer.reset = ->
-  MockTimer.timers = []
-  MockTimer.now = 0
-MockTimer.advance = (period) ->
-  MockTimer.now += period
-  for timer in MockTimer.timers
-    timer.fire() if timer.time? and timer.time <= MockTimer.now
-MockTimer.reset()
-
-
-class MockWebSocket
-  sent: []
-  _log: []
-  readyState: null
-
-  constructor: ->
-    @sent = []
-    @_log = []
-    @readyState = MockWebSocket.CONNECTING
-
-  obtainSent: ->
-    result = @sent
-    @sent = []
-    result
-
-  log: (message) ->
-    @_log.push message
-
-  send: (message) ->
-    @sent.push message
-
-  close: ->
-    @readyState = MockWebSocket.CLOSED
-    @onclose()
-
-  connected: ->
-    @readyState = MockWebSocket.OPEN
-    @onopen()
-
-  disconnected: ->
-    @readyState = MockWebSocket.CLOSED
-    @onclose()
-
-  receive: (message) ->
-    @onmessage data: message
-
-  assertMessages: (messages) ->
-    # sent is always an array. cast messages to be the same.
-    expected = [].concat messages
-    actual = (JSON.parse msg for msg in @obtainSent())
-    assert.deepEqual actual, expected
-
-MockWebSocket.CONNECTING = 0
-MockWebSocket.OPEN = 1
-MockWebSocket.CLOSED = 2
 
 
 shouldBeConnecting = (handlers) ->
   assert.equal handlers.obtainLog(), 'connecting'
+
+
+assertMessages = (sent, messages) ->
+  # sent is always an array. cast messages to be the same.
+  expected = [].concat messages
+  actual = (JSON.parse msg for msg in sent)
+  assert.deepEqual actual, expected
 
 shouldReconnect = (handlers, timer, failed, callback) ->
   if failed
@@ -123,7 +40,7 @@ connectAndPerformHandshake = (handlers, webSocket, callback) ->
   assert.notEqual webSocket, null
 
   webSocket.connected()
-  webSocket.assertMessages HELLO
+  assertMessages webSocket.obtainSent(), HELLO
   assert.equal handlers.obtainLog(), ''
 
   webSocket.receive JSON.stringify(HELLO)
@@ -211,7 +128,7 @@ describe 'Connector', ->
     assert.notEqual webSocket, null
 
     webSocket.connected()
-    webSocket.assertMessages HELLO
+    assertMessages webSocket.obtainSent(), HELLO
     assert.equal handlers.obtainLog(), ''
 
     timer.advance 5001
