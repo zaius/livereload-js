@@ -21,7 +21,9 @@ Options.defaults =
   snipver: null
   ext: null
   extver: null
+
   debug: true
+  eager: false
 
   uri: ->
     if document.location.protocol == 'https:'

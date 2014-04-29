@@ -442,6 +442,7 @@ Options.defaults = {
   ext: null,
   extver: null,
   debug: true,
+  eager: false,
   uri: function() {
     var proto;
     if (document.location.protocol === 'https:') {
@@ -606,7 +607,16 @@ __reloader.Reloader = Reloader = (function() {
   };
 
   Reloader.prototype.reloadPage = function() {
-    return this.window.document.location.reload();
+    if (this.options.eager) {
+      return this.window.document.location.reload();
+    } else {
+      this.console.log("Change detected. Waiting for focus");
+      return this.window.onfocus = (function(_this) {
+        return function() {
+          return _this.window.document.location.reload();
+        };
+      })(this);
+    }
   };
 
   Reloader.prototype.reloadImages = function(path) {

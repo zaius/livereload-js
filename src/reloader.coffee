@@ -92,8 +92,12 @@ exports.Reloader = class Reloader
 
 
   reloadPage: ->
-    @window.document.location.reload()
-
+    if @options.eager
+      @window.document.location.reload()
+    else
+      @console.log "Change detected. Waiting for focus"
+      @window.onfocus = =>
+        @window.document.location.reload()
 
   reloadImages: (path) ->
     expando = @generateUniqueString()
