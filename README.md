@@ -1,128 +1,142 @@
 LiveReload.js
 =============
 
-This repository contains the JavaScript file served to the browsers by various LiveReload servers:
+## What is LiveReload?
 
-* [LiveReload 2.x GUI for Mac](http://livereload.com/)
-* [guard-livereload](https://github.com/guard/guard-livereload)
+LiveReload is a tool for web developers and designers. See
+[livereload.com](http://livereload.com/) for more info.
 
-See [dist/livereload.js](https://github.com/livereload/livereload-js/raw/master/dist/livereload.js) for the latest ready-to-use, reasonably stable version built using the sources in this repository.
-
-It's OK to hot-link to dist/livereload.js from this repository, however it's probably a bad idea because you would lose the ability to use LiveReload offline. We recommend LiveReload server vendors to distribute livereload.js as part of their apps.
-
-
-Using livereload.js
--------------------
-
-This script is meant to be included into the web pages you want to monitor, like this:
-
-    <script src="http://localhost:35729/livereload.js"></script>
-
-LiveReload 2 server listens on port 35729 and serves livereload.js over HTTP (besides speaking the web socket protocol on the same port).
-
-A slightly smarter way is to use the host name of the current page, assuming that it is being served from the same computer. This approach enables LiveReload when viewing the web page from other devices on the network:
-
-    <script>document.write('<script src="http://'
-        + location.host.split(':')[0]
-        + ':35729/livereload.js"></'
-        + 'script>')</script>
-
-However, `location.host` is empty for file: URLs, so we need to account for that:
-
-    <script>document.write('<script src="http://'
-        + (location.host || 'localhost').split(':')[0]
-        + ':35729/livereload.js"></'
-        + 'script>')</script>
-
-LiveReload.js finds a script tag that includes `.../livereload.js` and uses it to determine the hostname/port to connect to. It also understands some options from the query string: `host`, `port`, `snipver`, `mindelay` and `maxdelay`.
-
-`snipver` specifies a version of the snippet, so that we can warn when the snippet needs to be updated. The currently recommended version 1 of the snippet is:
-
-    <script>document.write('<script src="http://'
-        + (location.host || 'localhost').split(':')[0]
-        + ':35729/livereload.js?snipver=1"></'
-        + 'script>')</script>
-
-Additionally, you might want to specify `mindelay` and `maxdelay`, which is minimum and maximum reconnection delay in milliseconds (defaulting to 1000 and 60000).
-
-Alternatively, instead of loading livereload.js from the LiveReload server, you might want to include it from a different URL. In this case include a `host` parameter to override the host name. For example:
-
-    <script src="https://github.com/livereload/livereload-js/raw/master/dist/livereload.js?host=localhost"></script>
+LiveReload.js connects to a LiveReload server via web sockets and listens for
+incoming change notifications. When CSS or image file is modified, it is
+live-refreshed without reloading the page. When any other file is modified, the
+page is reloaded.
 
 
-Communicating with livereload.js
---------------------------------
+## Using livereload.js
+
+On your build script / development environment, you need to have a livereload
+server that notifies the client whenever a change is made.
+ * [LiveReload 2.x GUI for Mac](http://livereload.com/)
+ * [rack-livereload](https://github.com/johnbintz/rack-livereload)
+ * [guard-livereload](https://github.com/guard/guard-livereload)
+ * Your own server - refer to the
+   [livereload prorocol](http://help.livereload.com/kb/ecosystem/livereload-protocol)
+
+
+Once you have the server running, include the livereload.js file in any HTML
+file that you want to be live-updated.
+
+    <script src="http://localhost/livereload.js"></script>
+
+You can download the file from
+[dist/livereload.js in this repository](https://github.com/zaius/livereload-js/raw/master/dist/livereload.js).
+Or you can install via bower.
+
+    bower install --save-dev "git://github.com/zaius/livereload-js#master"
+
+Most live-reload servers will also serve up their own copy of livereload.js.
+Be careful that you are requesting the right version.
+
+
+### Settings
+
+You can set options in a global variable `LiveReloadENV` before including the
+script. E.g.
+
+    <script>
+      window.LiveReloadENV = {
+        host: '192.168.0.123',
+        port: 31337
+      };
+    </script>
+    <script src="http://localhost/livereload.js"></script>
+
+This allows you to directly include the latest javascript from github.
+
+    <script src="https://github.com/zaius/livereload-js/raw/master/dist/livereload.js"></script>
+
+### Available settings
+
+ * mindelay - minimum delay before the websocket attempts a reconnect (default 1000)
+ * maxdelay - maximum delay before giving up on reconnecting (default 60000)
+ * host - hostname of the server hosting the livereload server. (default window.location.hostname)
+ * defer - whether to wait until the user switches back to the page before doing a full page reload. (default true)
+ * debug - whether to output status / debugging to console.log (default true)
+
+
+### Secure sockets
+
+Most browsers frown upon connecting to a non-secure websocket when serving the
+page over a secure connection. This version of livereload.js attempts to
+connect via a secure websocket (wss) if the page is loaded over https.
+Unfortunately many livereload servers don't support this. If you're running
+into this problem, you will need to use a proxy in front of your livereload
+server.
+
+
+## Communicating with livereload.js
 
 It is possible to communicate with a running LiveReload script using DOM events:
 
-* fire LiveReloadShutDown event on `document` to make LiveReload disconnect and go away
-* listen for LiveReloadConnect event on `document` to learn when the connection is established
-* listen for LiveReloadDisconnect event on `document` to learn when the connection is interrupted (or fails to be established)
+ * fire LiveReloadShutDown event on `document` to make LiveReload disconnect
+   and go away
+ * listen for LiveReloadConnect event on `document` to learn when the
+   connection is established
+ * listen for LiveReloadDisconnect event on `document` to learn when the
+   connection is interrupted (or fails to be established)
 
-LiveReload object is also exposed as `window.LiveReload`, with `LiveReload.disconnect()`, `LiveReload.connect()` and `LiveReload.shutDown()` being available. However I'm not yet sure if I want to keep this API, so consider it non-contractual (and email me if you have a use for it).
-
-
-Status
-------
-
-Done:
-
-* live CSS reloading
-* full page reloading
-* protocol, WebSocket communication
-* CSS @import support
-* live image reloading (IMG src, background-image and border-image properties, both inline and in stylesheets)
-* live in-browser LESS.js reloading
-
-To Do:
-
-* live JS reloading
+LiveReload object is also exposed as `window.LiveReload`, with
+`LiveReload.disconnect()`, `LiveReload.connect()` and `LiveReload.shutDown()`
+being available. However I'm not yet sure if I want to keep this API, so
+consider it non-contractual (and email me if you have a use for it).
 
 
-Issues & Limitations
---------------------
+## Features
 
-**Live reloading of imported stylesheets has a 200ms lag.** Modifying a CSS `@import` rule to reference a not-yet-cached file causes WebKit to lose all document styles, so we have to apply a workaround that causes a lag.
-
-Our workaround is to add a temporary LINK element for the imported stylesheet we're trying to reload, wait 200ms to make sure WebKit loads the new file, then remove the LINK tag and recreate the @import rule. This prevents a flash of unstyled content. (We also wait 200 more milliseconds and recreate the @import rule again, in case those initial 200ms were not enough.)
-
-**Live image reloading is limited to IMG src, background-image and border-image styles.** Any other places where images can be mentioned?
-
-**Live image reloading is limited to jpg, jpeg, gif and png extensions.** Maybe need to add SVG there? Anything else?
-
-
-What is LiveReload?
--------------------
-
-LiveReload is a tool for web developers and designers. See [livereload.com](http://livereload.com/) for more info.
-
-LiveReload.js connects to a LiveReload server via web sockets and listens for incoming change notifications. When CSS or image file is modified, it is live-refreshed without reloading the page. When any other file is modified, the page is reloaded.
+ * live CSS reloading
+ * full page reloading
+ * protocol, WebSocket communication
+ * CSS @import support
+ * live image reloading (IMG src, background-image and border-image properties,
+   both inline and in stylesheets)
+ * live in-browser LESS.js reloading
 
 
-Reimplementation
-----------------
+## Issues & Limitations
 
-Previously, the described logic has been part of LiveReload browser extensions. This repository contains an effort to reimplement the logic so that it:
+**Live reloading of imported stylesheets has a 200ms lag.** Modifying a CSS
+`@import` rule to reference a not-yet-cached file causes WebKit to lose all
+document styles, so we have to apply a workaround that causes a lag.
 
-* is standalone, [following the new approach to browser extensions](http://help.livereload.com/discussions/suggestions/12),
-* is covered with tests,
-* is modular and maintainable,
-* implements a [new future-proof protocol](http://help.livereload.com/kb/ecosystem/livereload-protocol),
-* also supports the legacy protocol for easy migration.
+Our workaround is to add a temporary LINK element for the imported stylesheet
+we're trying to reload, wait 200ms to make sure WebKit loads the new file, then
+remove the LINK tag and recreate the @import rule. This prevents a flash of
+unstyled content. (We also wait 200 more milliseconds and recreate the @import
+rule again, in case those initial 200ms were not enough.)
 
-Both old and new protocols are supported, so this file can readily work with existing LiveReload servers.
+**Live image reloading is limited to IMG src, background-image and border-image
+styles.** Any other places where images can be mentioned?
 
-
-CommonJS modules
-----------------
-
-New code is split into CommonJS-style modules, stitched together using a simple Rakefile.
-
-I've tried to use Stitch.js, but it did not want to autorun startup code from startup.coffee module. The custom-made regexp-ridden approach works so much better (and produces much clearer code).
+**Live image reloading is limited to jpg, jpeg, gif and png extensions.** Maybe
+need to add SVG there? Anything else?
 
 
-Running tests
--------------
+## Development
+
+Requirements
+  * nodejs
+  * coffee-script
+  * ruby
+  * rake
+
+### Building
+
+    rake
+
+output is in the `dist` folder.
+
+
+### Running tests
 
 Use node.js 0.4.x (if you have 0.5.x installed, use nvm) and run:
 
@@ -132,7 +146,7 @@ Get code coverage report (current coverage is about 70%):
 
     expresso -c -I lib
 
-License
--------
+
+## License
 
 livereload-js is available under the MIT license, see LICENSE file for details.
