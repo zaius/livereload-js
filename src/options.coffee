@@ -26,7 +26,7 @@ Options.defaults =
   eager: false
 
   uri: ->
-    if document.location.protocol == 'https:'
+    if window.location.protocol == 'https:'
       proto = 'wss:'
     else
       proto = 'ws:'

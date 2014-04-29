@@ -1,5 +1,3 @@
-
-exports.PROTOCOL_6 = PROTOCOL_6 = 'http://livereload.com/protocols/official-6'
 exports.PROTOCOL_7 = PROTOCOL_7 = 'http://livereload.com/protocols/official-7'
 
 exports.ProtocolError = class ProtocolError
@@ -16,27 +14,14 @@ exports.Parser = class Parser
   process: (data) ->
     try
       if not @protocol?
-        if data.match(///^ !!ver: ([\d.]+) $///)
-          @protocol = 6
-        else if message = @_parseMessage(data, ['hello'])
+        if message = @_parseMessage(data, ['hello'])
           if !message.protocols.length
             throw new ProtocolError("no protocols specified in handshake message")
           else if PROTOCOL_7 in message.protocols
             @protocol = 7
-          else if PROTOCOL_6 in message.protocols
-            @protocol = 6
           else
             throw new ProtocolError("no supported protocols found")
         @handlers.connected @protocol
-      else if @protocol == 6
-        message = JSON.parse(data)
-        if !message.length
-          throw new ProtocolError("protocol 6 messages must be arrays")
-        [command, options] = message
-        if command != 'refresh'
-          throw new ProtocolError("unknown protocol 6 command")
-
-        @handlers.message command: 'reload', path: options.path, liveCSS: options.apply_css_live ? yes
       else
         message = @_parseMessage(data, ['reload', 'alert'])
         @handlers.message(message)

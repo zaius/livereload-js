@@ -25,17 +25,6 @@ exports['should reject a bogus handshake'] = (beforeExit, assert) ->
   assert.ok handler.gotError
 
 
-exports['should speak protocol 6'] = (beforeExit, assert) ->
-  handler = new MockHandler()
-  parser  = new Parser(handler)
-
-  parser.process '!!ver:1.6'
-  assert.equal 6, parser.protocol
-
-  parser.process '[ "refresh", { "path": "foo.css" } ]'
-  assert.equal "reload(foo.css)", handler.obtainLog()
-
-
 exports['should speak protocol 7'] = (beforeExit, assert) ->
   handler = new MockHandler()
   parser  = new Parser(handler)
