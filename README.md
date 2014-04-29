@@ -71,7 +71,49 @@ page over a secure connection. This version of livereload.js attempts to
 connect via a secure websocket (wss) if the page is loaded over https.
 Unfortunately many livereload servers don't support this. If you're running
 into this problem, you will need to use a proxy in front of your livereload
-server.
+server. An example [nginx](http://nginx.org) config that forwards to a dev
+server on port 8000 and a livereload server on port 35729:
+
+    server {
+      listen 443 ssl;
+      server_name example.dev;
+
+      ssl_certificate  /keys/example.crt;
+      ssl_certificate_key /keys/example.key;
+
+      root /var/www/example.dev/public;
+
+      location /livereload {
+        proxy_pass http://localhost:35729;
+        proxy_set_header Host $http_host;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection "Upgrade";
+      }
+
+      location @app {
+        proxy_set_header Host $http_host;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_pass http://localhost:8000;
+      }
+
+      location / {
+        try_files $uri $uri/index.html $uri.html @app;
+      }
+    }
+
+
+Then you need to make sure that https livereloads connections will be
+sent via the existing https proxy. You can override the port using the settings
+object.
+
+      <script type="text/javascript">
+        window.LiveReloadENV = {
+          port: window.location.port ? 35729 : 443
+        };
+      </script>
+
 
 
 ## Communicating with livereload.js
