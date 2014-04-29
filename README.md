@@ -170,7 +170,7 @@ Requirements
   * coffee-script
   * ruby
   * rake
-  * expresso
+  * mocha
 
 ### Building
 
@@ -181,6 +181,7 @@ output is in the `dist` folder.
 
 ### Running tests
 
+    npm install
     rake
 
 

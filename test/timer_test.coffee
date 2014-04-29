@@ -1,41 +1,44 @@
+assert = require 'assert'
 { Timer } = require '../src/timer'
 
+describe 'Timer', ->
 
-exports['timer should fire an event once in due time'] = (beforeExit, assert) ->
-  fired = 0
-  timer = new Timer ->
-    ++fired
+  it 'should fire an event once in due time', (done) ->
+    @timeout 50
 
-  assert.equal no, timer.running
-  timer.start(20)
-  assert.equal yes, timer.running
+    timer = new Timer(->
+      done()
+    )
 
-  beforeExit ->
-    assert.equal 1, fired
-
-
-exports['timer should not fire after it is stopped'] = (beforeExit, assert) ->
-  fired = 0
-  timer = new Timer ->
-    ++fired
-
-  timer.start(20)
-  setTimeout((-> timer.stop()), 10)
-
-  beforeExit ->
-    assert.equal 0, fired
+    assert.equal no, timer.running()
+    timer.start 5
+    assert.equal yes, timer.running()
 
 
-exports['timer should restart interval on each start() call'] = (beforeExit, assert) ->
-  okToFire = no
-  fired = 0
-  timer = new Timer ->
-    assert.equal yes, okToFire
-    ++fired
+  it 'timer should not fire after it is stopped', (done) ->
+    @timeout 50
 
-  timer.start(10)
-  setTimeout((-> timer.start(100)), 5)
-  setTimeout((-> okToFire = yes), 15)
+    timer = new Timer ->
+      throw 'Timer fired'
 
-  beforeExit ->
-    assert.equal 1, fired
+    timer.start 20
+    setTimeout((-> timer.stop()), 10)
+
+    setTimeout done, 30
+
+
+  # I absolutely cannot get this async callback working properly on expresso.
+  # Hence the switch to mocha.
+  it 'should restart interval on each start() call', (done) ->
+    @timeout 50
+
+    okToFire = no
+    fired = no
+    timer = new Timer ->
+      assert.equal yes, okToFire
+      done()
+      fired = yes
+
+    timer.start 10
+    setTimeout((-> okToFire = yes), 15)
+    setTimeout((-> timer.start 20 ), 5)

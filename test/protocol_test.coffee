@@ -1,3 +1,5 @@
+assert = require 'assert'
+
 { Parser } = require '../src/protocol'
 
 class MockHandler
@@ -5,11 +7,17 @@ class MockHandler
     @_log = []
     @gotError = no
 
-  obtainLog: -> result = @_log.join("\n"); @_log = []; result
-  log: (message) -> @_log.push message
+  obtainLog: ->
+    result = @_log.join("\n")
+    @_log = []
+    result
+
+  log: (message) ->
+    @_log.push message
 
   connected: (@protocol)  ->
-  error:     (@error)     -> @gotError = yes
+  error: (@error) ->
+    @gotError = yes
 
   message:   (msg) ->
     switch msg.command
@@ -17,21 +25,23 @@ class MockHandler
       else                   @log msg.commmand
 
 
-exports['should reject a bogus handshake'] = (beforeExit, assert) ->
-  handler = new MockHandler()
-  parser  = new Parser(handler)
+describe 'Parser', ->
 
-  parser.process 'boo'
-  assert.ok handler.gotError
+  it 'should reject a bogus handshake', ->
+    handler = new MockHandler()
+    parser  = new Parser(handler)
+
+    parser.process 'boo'
+    assert.ok handler.gotError
 
 
-exports['should speak protocol 7'] = (beforeExit, assert) ->
-  handler = new MockHandler()
-  parser  = new Parser(handler)
+  it 'should speak protocol 7', ->
+    handler = new MockHandler()
+    parser  = new Parser(handler)
 
-  parser.process '{ "command": "hello", "protocols": [ "http://livereload.com/protocols/official/7" ] }'
-  assert.equal null, handler.error?.message
-  assert.equal 7, parser.protocol
+    parser.process '{ "command": "hello", "protocols": [ "http://livereload.com/protocols/official-7" ] }'
+    assert.equal null, handler.error?.message
+    assert.equal 7, parser.protocol
 
-  parser.process '{ "command": "reload", "path": "foo.css" }'
-  assert.equal "reload(foo.css)", handler.obtainLog()
+    parser.process '{ "command": "reload", "path": "foo.css" }'
+    assert.equal "reload(foo.css)", handler.obtainLog()

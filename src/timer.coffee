@@ -1,19 +1,23 @@
-exports.Timer = class Timer
-  constructor: (@func) ->
-    @running = no; @id = null
-    @_handler = =>
-      @running = no; @id = null
-      @func()
+class Timer
+  id: null
+  running: ->
+    @id != null
+
+  handler: ->
+    @id = null
+    @_callback() if typeof @_callback == 'function'
+
+  constructor: (@_callback) ->
+    this
 
   start: (timeout) ->
-    clearTimeout @id if @running
-    @id = setTimeout @_handler, timeout
-    @running = yes
+    clearTimeout @id if @id
+    @id = setTimeout =>
+      @handler()
+    , timeout
 
   stop: ->
-    if @running
-      clearTimeout @id
-      @running = no; @id = null
+    clearTimeout @id if @id
+    @id = null
 
-Timer.start = (timeout, func) ->
-  setTimeout func, timeout
+exports.Timer = Timer
