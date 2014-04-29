@@ -12,33 +12,44 @@ extend = ->
 
 Options = {}
 
-Options.defaults =
-  host: window.location.hostname
-  port: 35729
-  mindelay: 1000
-  maxdelay: 60000
-  handshake_timeout: 5000
-  snipver: null
-  ext: null
-  extver: null
+fakeWindow =
+  location:
+    protocol: 'http:'
+    hostname: 'localhost'
 
-  debug: true
-  eager: false
+Options.defaults = (scope) ->
+  {
+    host: scope.location.hostname
+    port: 35729
+    mindelay: 1000
+    maxdelay: 60000
+    handshake_timeout: 5000
+    snipver: null
+    ext: null
+    extver: null
 
-  uri: ->
-    if window.location.protocol == 'https:'
-      proto = 'wss:'
+    debug: true
+    eager: false
+
+    uri: (
+      if scope.location.protocol == 'https:'
+        proto = 'wss:'
+      else
+        proto = 'ws:'
+
+      "#{proto}//#{@host}:#{@port}/livereload"
+    )
+  }
+
+
+Options.extract = (scope) ->
+  if typeof scope == 'undefined'
+    if typeof window == 'undefined'
+      scope = fakeWindow
     else
-      proto = 'ws:'
+      scope = window
 
-    "#{proto}//#{@host}:#{@port}/livereload"
-
-
-Options.extract = ->
-  env = window.LiveReloadENV || {}
-  options = extend Options.defaults, env
-  for own key, value of options
-    options[key] = value.apply(options) if typeof value == 'function'
-  options
+  env = scope.LiveReloadENV || {}
+  extend Options.defaults(scope), env
 
 exports.Options = Options
