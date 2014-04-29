@@ -128,23 +128,18 @@ Requirements
   * coffee-script
   * ruby
   * rake
+  * expresso
 
 ### Building
 
-    rake
+    rake build
 
 output is in the `dist` folder.
 
 
 ### Running tests
 
-Use node.js 0.4.x (if you have 0.5.x installed, use nvm) and run:
-
-    expresso -I lib
-
-Get code coverage report (current coverage is about 70%):
-
-    expresso -c -I lib
+    rake
 
 
 ## License
