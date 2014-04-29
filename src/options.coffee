@@ -13,7 +13,7 @@ extend = ->
 Options = {}
 
 Options.defaults =
-  host: 'localhost'
+  host: window.location.hostname
   port: 35729
   mindelay: 1000
   maxdelay: 60000
