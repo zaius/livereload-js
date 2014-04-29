@@ -11,7 +11,7 @@ exports.LiveReload = class LiveReload
     @pluginIdentifiers = {}
 
     # i can haz console?
-    @console = if @window.location.href.match(/LR-verbose/) && @window.console && @window.console.log && @window.console.error
+    @console = if @window.console && @window.console.log && @window.console.error
       @window.console
     else
       log:   ->
@@ -23,9 +23,7 @@ exports.LiveReload = class LiveReload
       return
 
     # i can haz options?
-    unless @options = Options.extract(@window.document)
-      console.error("LiveReload disabled because it could not find its own <SCRIPT> tag")
-      return
+    @options = Options.extract()
 
     # i can haz reloader?
     @reloader = new Reloader(@window, @console, Timer)
@@ -43,12 +41,13 @@ exports.LiveReload = class LiveReload
 
       error: (e) =>
         if e instanceof ProtocolError
-          console.log "#{e.message}."
+          @log "#{e.message}."
         else
-          console.log "LiveReload internal error: #{e.message}"
+          @log "LiveReload internal error: #{e.message}"
 
       disconnected: (reason, nextDelay) =>
         @listeners.disconnect?()
+        nextDelay = Math.round(nextDelay / 1000)
         switch reason
           when 'cannot-connect'
             @log "LiveReload cannot connect to #{@options.host}:#{@options.port}, will retry in #{nextDelay} sec."
@@ -72,7 +71,7 @@ exports.LiveReload = class LiveReload
     @listeners[eventName] = handler
 
   log: (message) ->
-    @console.log "#{message}"
+    @console.log "#{message}" if @options.debug
 
   performReload: (message) ->
     @log "LiveReload received reload request for #{message.path}."

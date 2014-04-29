@@ -1,38 +1,42 @@
+# Approximate equivalent of jQuery.extend. Returns an object with all
+# properties merged. When there are duplicate keys, the latest object take
+# precendence.
+extend = ->
+  target = {}
+  sources = [].slice.call arguments, 0
+  for source in sources
+    for own key, value of source
+      target[key] = value
+  target
 
-exports.Options = class Options
-  constructor: ->
-    @host    = null
-    @port    = 35729
 
-    @snipver = null
-    @ext     = null
-    @extver  = null
+Options = {}
 
-    @mindelay = 1000
-    @maxdelay = 60000
-    @handshake_timeout = 5000
+Options.defaults =
+  host: 'localhost'
+  port: 35729
+  mindelay: 1000
+  maxdelay: 60000
+  handshake_timeout: 5000
+  snipver: null
+  ext: null
+  extver: null
+  debug: true
 
-  set: (name, value) ->
-    switch typeof @[name]
-      when 'undefined' then # ignore
-      when 'number'
-        @[name] = +value
-      else
-        @[name] = value
+  uri: ->
+    if document.location.protocol == 'https:'
+      proto = 'wss:'
+    else
+      proto = 'ws:'
 
-Options.extract = (document) ->
-  for element in document.getElementsByTagName('script')
-    if (src = element.src) && (m = src.match ///^ [^:]+ :// (.*) / z?livereload\.js (?: \? (.*) )? $///)
-      options = new Options()
-      if mm = m[1].match ///^ ([^/:]+) (?: : (\d+) )? $///
-        options.host = mm[1]
-        if mm[2]
-          options.port = parseInt(mm[2], 10)
+    "#{proto}//#{@host}:#{@port}/livereload"
 
-      if m[2]
-        for pair in m[2].split('&')
-          if (keyAndValue = pair.split('=')).length > 1
-            options.set keyAndValue[0].replace(/-/g, '_'), keyAndValue.slice(1).join('=')
-      return options
 
-  return null
+Options.extract = ->
+  env = window.LiveReloadENV || {}
+  options = extend Options.defaults, env
+  for own key, value of options
+    options[key] = value.apply(options) if typeof value == 'function'
+  options
+
+exports.Options = Options

@@ -5,7 +5,7 @@ Version = '2.0.8'
 exports.Connector = class Connector
 
   constructor: (@options, @WebSocket, @Timer, @handlers) ->
-    @_uri = "ws://#{@options.host}:#{@options.port}/livereload"
+    @_uri = @options.uri
     @_nextDelay = @options.mindelay
     @_connectionDesired = no
     @protocol = 0
