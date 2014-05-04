@@ -1,3 +1,4 @@
 .DS_Store
-lib/*.js
+lib/
+lib-cov/
 node_modules/
