@@ -20,7 +20,7 @@ server that notifies the client whenever a change is made.
  * [rack-livereload](https://github.com/johnbintz/rack-livereload)
  * [guard-livereload](https://github.com/guard/guard-livereload)
  * Your own server - refer to the
-   [livereload prorocol](http://help.livereload.com/kb/ecosystem/livereload-protocol)
+   [livereload protocol](http://help.livereload.com/kb/ecosystem/livereload-protocol)
 
 
 Once you have the server running, include the livereload.js file in any HTML
