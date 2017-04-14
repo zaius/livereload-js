@@ -47,7 +47,7 @@ __protocol.Parser = Parser = (function() {
       }
     } catch (_error) {
       e = _error;
-      if (e instanceof ProtocolError) {
+        if (typeof ProtocolError != 'undefined' && e instanceof ProtocolError) {
         return this.handlers.error(e);
       } else {
         throw e;
@@ -963,7 +963,7 @@ __livereload.LiveReload = LiveReload = (function() {
       })(this),
       error: (function(_this) {
         return function(e) {
-          if (e instanceof ProtocolError) {
+            if (typeof ProtocolError != 'undefined' && e instanceof ProtocolError) {
             return _this.log("" + e.message + ".");
           } else {
             return _this.log("LiveReload internal error: " + e.message);
